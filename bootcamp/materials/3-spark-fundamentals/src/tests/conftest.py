@@ -6,4 +6,5 @@ def spark():
     return SparkSession.builder \
       .master("local") \
       .appName("chispa") \
+      .config("spark.sql.catalogImplementation", "hive") \
       .getOrCreate()
