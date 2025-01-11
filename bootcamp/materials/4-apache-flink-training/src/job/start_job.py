@@ -56,6 +56,7 @@ def create_processed_events_sink_postgres(t_env):
     t_env.execute_sql(sink_ddl)
     return table_name
 
+#Inheriting 'ScalarFunction' - takes in one col and returns one col
 class GetLocation(ScalarFunction):
   def eval(self, ip_address):
     url = "https://api.ip2location.io"
@@ -85,6 +86,7 @@ def create_events_source_kafka(t_env):
     kafka_key = os.environ.get("KAFKA_WEB_TRAFFIC_KEY", "")
     kafka_secret = os.environ.get("KAFKA_WEB_TRAFFIC_SECRET", "")
     table_name = "events"
+    # parsing timestamp pattern
     pattern = "yyyy-MM-dd''T''HH:mm:ss.SSS''Z''"
     source_ddl = f"""
         CREATE TABLE {table_name} (
@@ -118,12 +120,13 @@ def log_processing():
     # Set up the execution environment
     env = StreamExecutionEnvironment.get_execution_environment()
     print('got streaming environment')
-    env.enable_checkpointing(10 * 1000)
+    env.enable_checkpointing(10 * 1000) #in ms
     env.set_parallelism(1)
 
     # Set up the table environment
     settings = EnvironmentSettings.new_instance().in_streaming_mode().build()
     t_env = StreamTableEnvironment.create(env, environment_settings=settings)
+    # like registering a UDF in spark
     t_env.create_temporary_function("get_location", get_location)
     try:
         # Create Kafka table
